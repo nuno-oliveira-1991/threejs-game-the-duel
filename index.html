@@ -59,8 +59,6 @@
 			const axesHelper = new THREE.AxesHelper( 5 );
 			scene.add( axesHelper );
 
-			const clock = new THREE.Clock();
-
 			// Setting camera position
 			camera.position.z = 9
 			camera.position.y = 6
@@ -75,232 +73,121 @@
 
 			// Setting up physics world
 			const physicsWorld = new CANNON.World({
-				gravity: new CANNON.Vec3(0, -9.82, 0)
+				gravity: new CANNON.Vec3(0, -9.82, 0),
 			})
 
 			// Setting Cannon Debugger
 			const cannonDebugger = new CannonDebugger(scene, physicsWorld, {})
-		
-			// Creating a class (box constructor)
-			class Box extends THREE.Mesh {
-				constructor({ 
-					width, 
-					height, 
-					depth,
-					name, 
-					color = '#00ff00', 
-					velocity = new Vector3(0, 0, 0),
-				  position = new Vector3(0, 0, 0),
-					maxDistance,
-					distanceTraveled,
-					standby,
-					speed
-				}) {
-					super(
-						new THREE.BoxGeometry(width, height, depth), 
-						new THREE.MeshStandardMaterial({ color })
-					)
 
-					this.width = width
-					this.height = height
-					this.depth = depth
-					this.name = name
-					this.speed = speed
-
-					this.position.set(position.x, position.y, position.z)
-
-					this.right = this.position.x + this.width / 2
-					this.left = this.position.x - this.width / 2
-
-					this.bottom = this.position.y - this.height / 2
-					this.top = this.position.y + this.height / 2
-
-					this.front = this.position.z + this.depth / 2
-					this.back = this.position.z - this.depth / 2
-
-					// Convert the position from THREE.Vector3 to CANNON.Vec3
-					this.body = new CANNON.Body({
- 				    mass: 10,
- 				    shape: new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2)),
-						velocity: new CANNON.Vec3(0, 0, 0),
- 				  });
- 				  this.body.position.copy(new CANNON.Vec3(position.x, position.y, position.z));
-
-					this.velocity = new CANNON.Vec3(velocity.x, velocity.y, velocity.z);
-					
-					this.maxDistance = maxDistance
-					this.distanceTraveled = distanceTraveled
-					this.standby = standby
-				}
-
-				// Updating the created box object
-				updateSides() {
-					this.right = this.position.x + this.width / 2
-					this.left = this.position.x - this.width / 2
-
-					this.bottom = this.position.y - this.height / 2
-					this.top = this.position.y + this.height / 2
-
-					this.front = this.position.z + this.depth / 2
-					this.back = this.position.z - this.depth / 2
-				}
-
-				update(delta) {
-					this.updateSides()
-
-					this.position.x += this.velocity.x
-					this.position.z += this.velocity.z
-
-					// Convert the position updates from THREE.Vector3 to CANNON.Vec3
-						const newPosition = new CANNON.Vec3(
-  				  this.position.x,
-  				  this.position.y,
-  				  this.position.z
-  				);
-
-  				// Update the position using the converted value
-  				this.body.position.copy(newPosition);
-				}
-			} 
+			const ground = new CANNON.Body({
+				mass: 0,
+				shape: new CANNON.Box(new CANNON.Vec3(5, 0.025, 5))
+			})
+			physicsWorld.addBody(ground)
+			ground.position.set(0, -0.55, 0)
+			const groundMesh = new THREE.Mesh(
+				new THREE.BoxGeometry(10, 0.05, 10),
+				new THREE.MeshStandardMaterial({
+					color: "#808080",
+				})
+			)
+			groundMesh.receiveShadow = true
+			scene.add(groundMesh)
 			
-			// Creating the Ground
-			const ground = new Box({
-				width: 10,
-				height: 0.1,
-				depth: 10,
-				name: "ground",
-				color: "#808080",
-				position: {
-					x: 0,
-					y: -0.55,
-					z: 0
-				}
+			const box = new CANNON.Body({
+				mass: 1,
+				shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
 			})
-			ground.receiveShadow = true
-			scene.add(ground)
-			// Ground bounding box
-			let groundBB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
-			groundBB.setFromObject(ground)
-			// Creating the Ground as a physics body
-			ground.body.mass = 0
-    	physicsWorld.addBody(ground.body);
+			physicsWorld.addBody(box)
+			box.position.set(-3, 0, 3)
+			const boxMesh = new THREE.Mesh(
+				new THREE.BoxGeometry(1, 1, 1),
+				new THREE.MeshStandardMaterial({
+					color: '#00ff00',
+				})
+			)
+			boxMesh.receiveShadow = true
+			scene.add(boxMesh)
 
-			// Creating Cube 1
-			const cube1 = new Box({
-				width: 1,
-				height: 1,
-				depth: 1,
-				name: "cube1",
-				velocity: new CANNON.Vec3(0, 0, 0),
-				position: {
-					x: -3,
-					y: 0,
-					z: 3
-				}
+			const enemy = new CANNON.Body({
+				mass: 1,
+				shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5))
 			})
-			cube1.castShadow = true
-			scene.add(cube1)
-			// Cube 1 bounding box
-			let cube1BB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
-			cube1BB.setFromObject(cube1)
-			// setting Cube 1 as a physics body
-			physicsWorld.addBody(cube1.body)
-
-			// Creating Projectile 1
-			let projectile1 = new Box({
-				width: 0.1,
-				height: 0.1,
-				depth: 0.1,
-				color: "#ff0000",
+			physicsWorld.addBody(enemy)
+			enemy.position.set(3, 0, -3)
+			const enemyMesh = new THREE.Mesh(
+				new THREE.BoxGeometry(1, 1, 1),
+				new THREE.MeshStandardMaterial({
+					color: '#0000ff'
+				})
+			)
+			enemyMesh.receiveShadow = true
+			scene.add(enemyMesh)
+			
+			const projectile = new CANNON.Body({
+				mass: 1,
+				shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.05, 0.05)),
 				velocity:  new CANNON.Vec3(0, 0, 0),
-				maxDistance: 4,
-				distanceTraveled: 0,
-				standby: true,
-				speed: 6
 			})
-			projectile1.receiveShadow = true
-			scene.add(projectile1)
-			// Create the bounding box for projectile1
-			let projectile1BB = new THREE.Box3().setFromObject(projectile1);
-			// setting Projectile 1 as a physics body
-			physicsWorld.addBody(projectile1.body)
-
-			// Creating Cube 2
-			const cube2 = new Box({
-				width: 1,
-				height: 1,
-				depth: 1,
-				color: '#0000ff',
-				velocity: new CANNON.Vec3(0, 0, 0),
-				position: {
-					x: 3,
-					y: 0,
-					z: -3
-				} 
-			})
-			cube2.castShadow = true
-			scene.add(cube2)
-			// Cube 2 bounding box
-			let cube2BB = new THREE.Box3(new THREE.Vector3(), new THREE.Vector3())
-			cube2BB.setFromObject(cube2)
-			// Setting Cube 2 as a physics body
-			physicsWorld.addBody(cube2.body)
-
-			// Detecting box collisions
-			function boxCollision({	box1, box2 }) {
-				// Detect for collision on the x, y and z axis
-				const xCollision = box1.right >= box2.left && box1.left <= box2.right
-				const yCollision = box1.bottom + box1.velocity.y <= box2.top && box1.top >= box2.bottom
-				const zCollision = box1.front >= box2.back && box1.back <= box2.front
-
-				return xCollision && yCollision && zCollision
-			}
+			physicsWorld.addBody(projectile)
+			projectile.position.set(-3, 0, 4)
+			projectile.receiveShadow = true
+			projectile.maxDistance = 5
+			projectile.distanceTraveled = 0
+			projectile.standby = true
+			projectile.speed = 6
+			const projectileMesh = new THREE.Mesh(
+				new THREE.BoxGeometry(0.1, 0.1, 0.1),
+				new THREE.MeshStandardMaterial({
+					color: "#ff0000"
+				})
+			)
+			scene.add(projectileMesh)
 			
 			// Function to shoot projectile
-			function shootProjectile(projectile, projectileBB, shooter) {
-			  if (projectile.standby) {
-				
-			    console.log("fire!")
-			    projectile.standby = false
-			    projectile.velocity = new THREE.Vector3(0, 0, 4)
-					
-			    updateProjectilePosition(projectile, projectileBB, shooter)
-			  }
+			function shootProjectile(projectile, projectileMesh, shooter) {
+  			if (projectile.standby) {
+    			console.log("fire!");
+    			projectile.standby = false;
+    			projectile.velocity = new CANNON.Vec3(0, 0, 1);
+  			}
+
+  			updateProjectilePosition(projectile, projectileMesh, shooter);
 			}
-			
-			// Function to update projectile position
-			function updateProjectilePosition(projectile, projectileBB, shooter) {
-			  let clock = new THREE.Clock()
-				let initialPosition = projectile.position.clone()
-			  let currentPosition = new THREE.Vector3(projectile.position.x, projectile.position.y, projectile.position.z)
-			  let maxDistanceReached = false
-			  let displacement = new THREE.Vector3(0, 0, 0)
-				let initialDirection = new THREE.Vector3(0, 0, 1)
-  			initialDirection.applyQuaternion(shooter.quaternion)
+
+			function updateProjectilePosition(projectile, projectileMesh, shooter) {
+			  let clock = new THREE.Clock();
+			  let maxDistanceReached = false;
+				const initialPosition = new CANNON.Vec3().copy(projectile.position);
+			  let currentPosition = new CANNON.Vec3().copy(projectile.position);
+				let displacement = new CANNON.Vec3(0, 0, 0);
+				let initialDirection = new CANNON.Vec3(0, 0, 1);
+			  initialDirection.copy(shooter.quaternion.vmult(initialDirection));
+
+				console.log(displacement)
 
 			  function animate() {
-			    let deltaTime = clock.getDelta()
-					projectile.distanceTraveled += displacement.length()
-					displacement.copy(initialDirection).multiplyScalar(projectile.speed * deltaTime)
-					currentPosition.x += displacement.x
-					currentPosition.y += displacement.y
-					currentPosition.z += displacement.z
-					projectile.position.set(currentPosition.x, currentPosition.y, currentPosition.z)
-					projectile.body.position.set(projectile.position)
-					projectile.updateMatrixWorld()
-					projectileBB.setFromObject(projectile)
+			    let deltaTime = clock.getDelta();
+					displacement.copy(initialDirection).scale(projectile.speed * deltaTime)
+					currentPosition.copy(initialPosition.vadd(displacement))
+			    projectile.position.copy(currentPosition)
+			    projectileMesh.position.copy(projectile.position);
+			    projectileMesh.quaternion.copy(projectile.quaternion);
+			    projectile.distanceTraveled = currentPosition.distanceTo(initialPosition)
 
-			    // Check if the distance traveled by the projectile exceeds the maximum distance
+					console.log(displacement)
+				
 			    if (!maxDistanceReached && projectile.distanceTraveled >= projectile.maxDistance) {
-			      console.log("Max distance reached")
-			      maxDistanceReached = true
-						projectile.standby = true
-			      projectile.distanceTraveled = 0    
+			      console.log("Max distance reached");
+			      maxDistanceReached = true;
+			      projectile.standby = true;
+			      projectile.distanceTraveled = 0;
+						projectile.velocity = new CANNON.Vec3(0, 0, 0)
 			    }
 				
-			    if (!maxDistanceReached) {
-			      requestAnimationFrame(animate)
-			    }
+					if (!maxDistanceReached) {
+						requestAnimationFrame(animate)
+					}
 			  }
 			
 			  animate();
@@ -387,108 +274,61 @@
 				}
 			})
 			window.addEventListener("keypress", (event) => {
-				if (event.code === "KeyH") shootProjectile(projectile1, projectile1BB, cube1)
+				if (event.code === "KeyH") {
+					return shootProjectile(projectile, projectileMesh, box)
+				}
 			})
-		
-			// Animation loop
-			function animate() {
-				const deltaTime = clock.getDelta();
-			  requestAnimationFrame(animate)
+
+      // Animation loop
+      function animateLoop() {
+			  requestAnimationFrame(animateLoop)
 			  renderer.render(scene, camera)
 			  //cannonDebugger.update()
-			
-			  ground.update()
-			  cube1.update()
-			  cube2.update()
-				projectile1.update()
-				
-				// Update Objects' world matrix
-			  cube1.updateMatrixWorld()
-				cube1BB.setFromObject(cube1)
-				cube2.updateMatrixWorld()
-				cube2BB.setFromObject(cube2)
-				projectile1.updateMatrixWorld()
-				projectile1BB.setFromObject(projectile1)
 
 			  // Physics World code
-				physicsWorld.fixedStep()
+				physicsWorld.fixedStep( 1 / 60 )
 
-				ground.body.position.copy(ground.position)
-				ground.body.quaternion.copy(ground.quaternion)
+				groundMesh.position.copy(ground.position)
+				groundMesh.quaternion.copy(ground.quaternion)
+				boxMesh.position.copy(box.position)
+				boxMesh.quaternion.copy(box.quaternion)
+				enemyMesh.position.copy(enemy.position)
+				enemyMesh.quaternion.copy(enemy.quaternion)
 
-				cube1.body.position.copy(cube1.position)
-				cube1.body.quaternion.copy(cube1.quaternion)
+				// Calculate projectile position relative to the box
+				const offset = new THREE.Vector3(0, 0, 1);
+  			offset.applyQuaternion(box.quaternion);
+  			const projectilePosition = new CANNON.Vec3();
+  			box.position.vadd(new CANNON.Vec3(offset.x, offset.y, offset.z), projectilePosition);
 
-				cube2.body.position.copy(cube2.position)
-				cube2.body.quaternion.copy(cube2.quaternion)
+  			projectile.position.copy(projectilePosition);
+  			projectile.quaternion.copy(box.quaternion);
+				projectileMesh.position.copy(projectile.position)
+				projectileMesh.quaternion.copy(projectile.quaternion)
 
-				const projectileOffset = new THREE.Vector3(0, 0, 1)
+				// Movement code
+				if (keys.a.pressed) box.position.x += -0.03
+				else if (keys.d.pressed) box.position.x += 0.03
 
-				projectile1.position.copy(new THREE.Vector3(
-				  cube1.position.x,
-				  cube1.position.y,
-				  cube1.position.z + projectileOffset
-				));
-				projectile1.body.position.copy(projectile1.position)
+				if (keys.w.pressed) box.position.z += -0.03
+				else if (keys.s.pressed) box.position.z += 0.03
 
-				if (projectile1.standby) {
-				  // Apply cube1's rotation to projectile1 when in standby mode
-					projectile1.quaternion.copy(cube1.quaternion)
-				  projectile1.body.quaternion.copy(projectile1.quaternion)
-					// Update the position of projectile1 relative to cube1
-					const relativePosition = projectileOffset.clone().applyQuaternion(cube1.quaternion)
-				  projectile1.position.copy(cube1.position).add(relativePosition)
-				  projectile1.body.position.copy(projectile1.position)
+				// Rotation code
+				if (keys.b.pressed) {
+					const quaternion = new CANNON.Quaternion();
+				  quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -0.03);
+				  box.quaternion.mult(quaternion, box.quaternion);
 				}
+				else if (keys.m.pressed) {
+					const quaternion = new CANNON.Quaternion();
+				  quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), 0.03);
+				  box.quaternion.mult(quaternion, box.quaternion);
+				}
+
 				
-			  // Movement code
-				if (keys.a.pressed) cube1.position.x += -0.03
-				else if (keys.d.pressed) cube1.position.x += 0.03
-				else cube1.velocity.x = 0
+		  }
 
-				if (keys.w.pressed) cube1.position.z += -0.03
-				else if (keys.s.pressed) cube1.position.z += 0.03
-				else cube1.velocity.z = 0
-
-				if (keys.b.pressed) cube1.rotation.y += -0.03
-				else if (keys.m.pressed) cube1.rotation.y += 0.03
-				else cube1.velocity.y = 0
-
-			
-			  // Collision code
-				groundBB.copy(ground.geometry.boundingBox).applyMatrix4(ground.matrixWorld)
-			  cube1BB.copy(cube1.geometry.boundingBox).applyMatrix4(cube1.matrixWorld)
-			  cube2BB.copy(cube2.geometry.boundingBox).applyMatrix4(cube2.matrixWorld)
-			  projectile1BB.copy(projectile1.geometry.boundingBox).applyMatrix4(projectile1.matrixWorld)
-			
-				if (boxCollision({
-			    box1: cube1,
-			    box2: cube2
-			  })) {
-			    console.log("Box collision detected")
-			  } else if (boxCollision({
-					box1: projectile1,
-					box2: cube2
-				})) {
-					console.log("projectile collision detected")
-				}
-
-				// Apply forces to cubes
-    const collisionForce = 10;
-    const collisionNormal = new CANNON.Vec3(0, 1, 0); // Assuming a flat ground surface
-
-    const cube1Body = cube1.body;
-    const cube2Body = cube2.body;
-
-    // Apply force to cube1 in the direction of the collision normal
-    cube1Body.applyForce(collisionNormal.scale(collisionForce), cube1Body.position);
-
-    // Apply equal and opposite force to cube2
-    cube2Body.applyForce(collisionNormal.scale(-collisionForce), cube2Body.position);
-			
-			}
-
-			animate();
+			animateLoop();
 
 		</script>
     
