@@ -3,7 +3,7 @@ It is still in it's first stages of development, being developed as a personal p
 
 To run this app:
 
-clone this repository or download it.
-install node packages (npm install)
-run vite (npm run dev)
-Have fun!!
+  1. clone this repository or download it.
+  2. install node packages (npm install)
+  3. run vite (npm run dev)
+  4. Have fun!!
