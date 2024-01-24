@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "vite",
-    "build": "webpack --mode production",
+    "dev": "vite", // Use Vite for development
+    "build": "vite build", // Use Vite for building
     "preview": "vite preview"
   },
   "author": "",
